@@ -8,6 +8,7 @@ This Project involves building a set of APIs that manage user data, interact wit
   - [Setup UserAPI](#setup-userapi)
 - [Connect Database](#create-database)
 - [Running The Application](#running-the-application)
+- [API Endpoints](#api-endpoints)
 
 ## Prerequisites
 
@@ -48,4 +49,14 @@ php bin/console doctrine:migrations:migrate
 ```
 php -S 127.0.0.1:8000 -t public  # or symfony serve
 ```
+
+## API Endpoints
+
+| Method | Endpoint               | Description                                |
+|--------|------------------------|--------------------------------------------|
+| POST   | `/api/upload`          | Upload user data from a CSV file.         |
+| GET    | `/api/users`           | Retrieve a list of all users.             |
+| GET    | `/api/backup`          | Create a backup of the database.          |
+| POST   | `/api/restore`         | Restore the database from a backup file.  |
+
 
