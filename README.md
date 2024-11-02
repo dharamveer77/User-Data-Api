@@ -40,9 +40,9 @@ DATABASE_URL="mysql://username:password@127.0.0.1:3306/Users"
 
 ```
 php bin/console doctrine:database:create
-php bin/console make:entity User
-php bin/console make:migration
-php bin/console doctrine:migrations:migrate
+php bin/console make:entity User  #if you create new project
+php bin/console make:migration    #if you create new project
+php bin/console doctrine:migrations:migrate   #if you create new project
 ```
 
 ### Running The Application
