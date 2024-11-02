@@ -1,0 +1,16 @@
+# Symfony specific
+/var/
+/vendor/
+/node_modules/
+/public/bundles/
+/public/uploads/
+/tests/Resources/
+/tests/bootstrap.php
+.env.local
+.env.*.local
+.env.*.test
+.DS_Store
+.idea/
+.vscode/
+.phpunit.result.cache
+.env
