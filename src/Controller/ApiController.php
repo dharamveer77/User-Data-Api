@@ -8,22 +8,24 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\Messenger\SendEmailMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Process\Process;
 
 #[Route('/api')]
 class ApiController extends AbstractController
 {
     #[Route('/upload', name: 'upload_data', methods: ['POST'])]
-    public function upload(EntityManagerInterface $em, Request $request, MailerInterface $mailer): JsonResponse
+    public function upload(EntityManagerInterface $em, Request $request, MessageBusInterface $bus): JsonResponse
     {
         $file = $request->files->get('file');
 
         if (!$file || $file->getClientOriginalExtension() !== 'csv') {
             return new JsonResponse(['message' => 'Invalid file type.'], Response::HTTP_BAD_REQUEST);
         }
+
+        $emails = []; // Array to hold unique email addresses
 
         if (($handle = fopen($file->getPathname(), 'r')) !== false) {
             fgetcsv($handle); // Skip the header
@@ -37,18 +39,27 @@ class ApiController extends AbstractController
 
                 $em->persist($user);
 
-                // emails asynchronously after persisting
-                $email = (new Email())
-                    ->from('no-reply@example.com')
-                    ->to($user->getEmail())
-                    ->subject('Data Uploaded')
-                    ->text('Your data has been successfully uploaded.');
-                $mailer->send($email);
+                // Collect email addresses to send notifications later
+                $emails[] = $user->getEmail();
             }
             fclose($handle);
 
             // Flush once to save all entities in one transaction
             $em->flush();
+
+            // Send emails after persisting all users
+            $emails = array_unique($emails); // Remove duplicate emails
+
+            foreach ($emails as $emailAddress) {
+                $email = (new Email())
+                    ->from('cricsoch77@gmail.com')
+                    ->to($emailAddress)
+                    ->subject('Data Uploaded')
+                    ->text('Your data has been successfully uploaded.');
+
+                // Dispatch the email to the Messenger bus for asynchronous sending
+                $bus->dispatch(new SendEmailMessage($email));
+            }
 
             return new JsonResponse(['message' => 'Data uploaded and emails sent successfully.']);
         }
@@ -132,8 +143,7 @@ class ApiController extends AbstractController
         }
 
         try {
-            // Split the backup content into individual SQL statements
-            $queries = preg_split('/;\s*[\r\n]+/', $backupContent); // Split by semicolon and new line
+            $queries = preg_split('/;\s*[\r\n]+/', $backupContent);
 
             foreach ($queries as $query) {
                 $query = trim($query);
